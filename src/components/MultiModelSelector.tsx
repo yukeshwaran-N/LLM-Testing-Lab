@@ -1,99 +1,115 @@
+// src/components/MultiModelSelector.tsx
 import { useState } from "react";
-import { Target, X } from "lucide-react";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
-interface MultiModelSelectorProps {
+// Define the props interface
+export interface MultiModelSelectorProps {
   selectedModels: string[];
   onModelsChange: (models: string[]) => void;
+  availableModels: { value: string; label: string }[];
+  disabled?: boolean;
 }
 
-const availableModels = [
-  { value: "gemma:2b", label: "Gemma 2B" },
-  { value: "phi3:mini", label: "Phi-3 Mini" },
-  { value: "llama3", label: "Llama 3" },
-  { value: "mistral", label: "Mistral" },
-  { value: "codellama", label: "Code Llama" },
-];
-
-const MultiModelSelector = ({ selectedModels, onModelsChange }: MultiModelSelectorProps) => {
+const MultiModelSelector = ({
+  selectedModels,
+  onModelsChange,
+  availableModels,
+  disabled = false,
+}: MultiModelSelectorProps) => {
   const [open, setOpen] = useState(false);
 
-  const toggleModel = (value: string) => {
-    if (selectedModels.includes(value)) {
-      onModelsChange(selectedModels.filter(m => m !== value));
+  const toggleModel = (modelValue: string) => {
+    if (selectedModels.includes(modelValue)) {
+      onModelsChange(selectedModels.filter((model) => model !== modelValue));
     } else {
-      onModelsChange([...selectedModels, value]);
+      onModelsChange([...selectedModels, modelValue]);
     }
-  };
-
-  const removeModel = (value: string) => {
-    onModelsChange(selectedModels.filter(m => m !== value));
   };
 
   return (
     <div className="space-y-2">
-      <Label className="text-sm font-medium flex items-center gap-2">
-        <Target className="w-4 h-4 text-warning" />
-        Target Models
-        <span className="text-xs text-muted-foreground">(multi-select)</span>
-      </Label>
-      
+      <label className="text-sm font-medium">Target Models</label>
+      <div className="flex flex-wrap gap-2 mb-2">
+        {selectedModels.map((modelValue) => {
+          const model = availableModels.find((m) => m.value === modelValue);
+          return (
+            <Badge
+              key={modelValue}
+              variant="secondary"
+              className="px-3 py-1"
+              onClick={() => toggleModel(modelValue)}
+            >
+              {model?.label || modelValue}
+              <button
+                className="ml-2 hover:text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleModel(modelValue);
+                }}
+              >
+                ×
+              </button>
+            </Badge>
+          );
+        })}
+      </div>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            className="w-full justify-start bg-secondary/50 border-border min-h-[42px] h-auto py-2"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between"
+            disabled={disabled}
           >
-            {selectedModels.length === 0 ? (
-              <span className="text-muted-foreground">Select target models...</span>
-            ) : (
-              <div className="flex flex-wrap gap-1">
-                {selectedModels.map(model => (
-                  <Badge
-                    key={model}
-                    variant="secondary"
-                    className="gap-1 bg-primary/20"
-                  >
-                    {availableModels.find(m => m.value === model)?.label || model}
-                    <X
-                      className="w-3 h-3 cursor-pointer hover:text-destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeModel(model);
-                      }}
-                    />
-                  </Badge>
-                ))}
-              </div>
-            )}
+            Select models...
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-64 p-2 bg-popover border-border">
-          <div className="space-y-1">
-            {availableModels.map(model => (
-              <div
-                key={model.value}
-                className="flex items-center space-x-2 p-2 rounded hover:bg-secondary/50 cursor-pointer"
-                onClick={() => toggleModel(model.value)}
-              >
-                <Checkbox
-                  checked={selectedModels.includes(model.value)}
-                  onCheckedChange={() => toggleModel(model.value)}
-                />
-                <span className="text-sm">{model.label}</span>
-              </div>
-            ))}
-          </div>
+        <PopoverContent className="w-full p-0">
+          <Command>
+            <CommandInput placeholder="Search models..." />
+            <CommandEmpty>No models found.</CommandEmpty>
+            <CommandGroup className="max-h-60 overflow-y-auto">
+              {availableModels.map((model) => (
+                <CommandItem
+                  key={model.value}
+                  value={model.value}
+                  onSelect={() => toggleModel(model.value)}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      selectedModels.includes(model.value)
+                        ? "opacity-100"
+                        : "opacity-0"
+                    )}
+                  />
+                  {model.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </Command>
         </PopoverContent>
       </Popover>
+      <p className="text-xs text-muted-foreground">
+        {selectedModels.length} model(s) selected
+      </p>
     </div>
   );
 };

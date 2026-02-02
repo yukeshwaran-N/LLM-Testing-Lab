@@ -1,8 +1,17 @@
 import { Trophy, Medal, Shield, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ModelStats } from "@/types/test";
 import { cn } from "@/lib/utils";
+
+// Define the interface locally
+interface ModelStats {
+  model: string;
+  totalTests: number;
+  vulnerableCount: number;
+  safeCount: number;
+  vulnerablePercent: number;
+  safePercent: number;
+}
 
 interface LeaderboardProps {
   modelStats: ModelStats[];
@@ -24,10 +33,10 @@ const Leaderboard = ({ modelStats }: LeaderboardProps) => {
 
   if (modelStats.length === 0) {
     return (
-      <div className="glass-card rounded-xl p-12 gradient-border text-center">
-        <Trophy className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+      <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-xl">
+        <Trophy className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <h3 className="text-lg font-medium mb-2">No Leaderboard Data</h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-gray-500">
           Run tests to populate the model vulnerability leaderboard.
         </p>
       </div>
@@ -35,20 +44,20 @@ const Leaderboard = ({ modelStats }: LeaderboardProps) => {
   }
 
   return (
-    <div className="glass-card rounded-xl gradient-border overflow-hidden">
-      <div className="p-4 bg-secondary/30 border-b border-border flex items-center gap-2">
-        <Trophy className="w-5 h-5 text-primary" />
+    <div className="border rounded-xl overflow-hidden">
+      <div className="p-4 bg-gray-50 border-b flex items-center gap-2">
+        <Trophy className="w-5 h-5 text-blue-500" />
         <h3 className="font-semibold">Model Vulnerability Leaderboard</h3>
-        <span className="text-xs text-muted-foreground ml-auto">Sorted by vulnerability rate</span>
+        <span className="text-xs text-gray-500 ml-auto">Sorted by vulnerability rate</span>
       </div>
 
-      <div className="divide-y divide-border">
+      <div className="divide-y divide-gray-200">
         {modelStats.map((stat, index) => (
-          <div 
+          <div
             key={stat.model}
             className={cn(
-              "p-4 flex items-center gap-4 transition-colors",
-              index === 0 && "bg-destructive/5"
+              "p-4 flex items-center gap-4",
+              index === 0 && "bg-red-50"
             )}
           >
             <div className="flex-shrink-0">
@@ -58,26 +67,26 @@ const Leaderboard = ({ modelStats }: LeaderboardProps) => {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-2">
                 <span className="font-medium truncate">{stat.model}</span>
-                <Badge 
-                  variant="outline" 
-                  className="text-xs"
+                <Badge
+                  variant="outline"
+                  className="text-xs bg-gray-100"
                 >
                   {stat.totalTests} tests
                 </Badge>
               </div>
-              
+
               <div className="flex items-center gap-3">
-                <Progress 
-                  value={stat.vulnerablePercent} 
+                <Progress
+                  value={stat.vulnerablePercent}
                   className="flex-1 h-2"
                 />
                 <span className={cn(
                   "text-sm font-mono font-semibold w-16 text-right",
-                  stat.vulnerablePercent > 50 
-                    ? "text-destructive" 
-                    : stat.vulnerablePercent > 25 
-                    ? "text-warning" 
-                    : "text-success"
+                  stat.vulnerablePercent > 50
+                    ? "text-red-600"
+                    : stat.vulnerablePercent > 25
+                      ? "text-orange-500"
+                      : "text-green-600"
                 )}>
                   {stat.vulnerablePercent.toFixed(1)}%
                 </span>
@@ -85,11 +94,11 @@ const Leaderboard = ({ modelStats }: LeaderboardProps) => {
             </div>
 
             <div className="flex-shrink-0 flex gap-4 text-sm">
-              <div className="flex items-center gap-1 text-destructive">
+              <div className="flex items-center gap-1 text-red-600">
                 <AlertTriangle className="w-4 h-4" />
                 <span className="font-mono">{stat.vulnerableCount}</span>
               </div>
-              <div className="flex items-center gap-1 text-success">
+              <div className="flex items-center gap-1 text-green-600">
                 <Shield className="w-4 h-4" />
                 <span className="font-mono">{stat.safeCount}</span>
               </div>

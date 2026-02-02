@@ -1,64 +1,96 @@
-import { Activity, ShieldAlert, Percent } from "lucide-react";
+// src/components/SummaryCards.tsx
+import { Target, AlertTriangle, Shield, BarChart3 } from "lucide-react";
 import { TestResult } from "@/types/test";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface SummaryCardsProps {
-  results: TestResult[];
+  results?: TestResult[];
 }
 
-const SummaryCards = ({ results }: SummaryCardsProps) => {
+const SummaryCards = ({ results = [] }: SummaryCardsProps) => {
+  // Safety check
+  if (!Array.isArray(results) || results.length === 0) {
+    return null;
+  }
+
+  const vulnerableCount = results.filter(r => r?.verdict === "VULNERABLE").length;
+  const safeCount = results.filter(r => r?.verdict === "SAFE").length;
   const totalAttempts = results.length;
-  const vulnerableCount = results.filter((r) => r.verdict === "VULNERABLE").length;
-  const successRate = totalAttempts > 0 ? Math.round((vulnerableCount / totalAttempts) * 100) : 0;
+  const successRate = totalAttempts > 0 ? (vulnerableCount / totalAttempts) * 100 : 0;
+
+  // Calculate average response length
+  const avgResponseLength = Math.round(
+    results.reduce((sum, r) => sum + (r?.model_response?.length || 0), 0) / results.length
+  );
 
   const cards = [
     {
-      title: "Total Attempts",
-      value: totalAttempts,
-      icon: Activity,
-      color: "text-primary",
-      bgColor: "bg-primary/10",
-      borderColor: "border-primary/30",
+      title: "Detection Rate",
+      value: `${successRate.toFixed(1)}%`,
+      subtitle: "Vulnerabilities Found",
+      icon: Target,
+      color: "text-blue-500",
+      bgColor: "bg-blue-500/10",
+      stats: `${vulnerableCount}/${totalAttempts} attempts`
     },
     {
       title: "Vulnerable",
       value: vulnerableCount,
-      icon: ShieldAlert,
-      color: "text-destructive",
-      bgColor: "bg-destructive/10",
-      borderColor: "border-destructive/30",
+      subtitle: "Security Failures",
+      icon: AlertTriangle,
+      color: "text-red-500",
+      bgColor: "bg-red-500/10",
+      stats: "Models provided harmful info"
     },
     {
-      title: "Success Rate",
-      value: `${successRate}%`,
-      icon: Percent,
-      color: successRate > 50 ? "text-destructive" : "text-success",
-      bgColor: successRate > 50 ? "bg-destructive/10" : "bg-success/10",
-      borderColor: successRate > 50 ? "border-destructive/30" : "border-success/30",
+      title: "Safe",
+      value: safeCount,
+      subtitle: "Secure Responses",
+      icon: Shield,
+      color: "text-green-500",
+      bgColor: "bg-green-500/10",
+      stats: "Models correctly refused"
     },
+    {
+      title: "Avg Response",
+      value: avgResponseLength,
+      subtitle: "Characters",
+      icon: BarChart3,
+      color: "text-purple-500",
+      bgColor: "bg-purple-500/10",
+      stats: "Per attempt"
+    }
   ];
 
   return (
-    <div className="grid grid-cols-3 gap-4 mb-6">
-      {cards.map((card, index) => (
-        <div
-          key={card.title}
-          className={`glass-card rounded-xl p-4 border ${card.borderColor} animate-scale-in`}
-          style={{ animationDelay: `${index * 100}ms` }}
-        >
-          <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-lg ${card.bgColor}`}>
-              <card.icon className={`w-5 h-5 ${card.color}`} />
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {cards.map((card) => (
+        <Card key={card.title} className="border-border/50">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className={`p-2 rounded-lg ${card.bgColor}`}>
+                  <card.icon className={`w-4 h-4 ${card.color}`} />
+                </div>
+                <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
+              </div>
+              <Badge variant="outline" className="text-xs">
+                {card.subtitle}
+              </Badge>
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                {card.title}
-              </p>
-              <p className={`text-2xl font-bold font-mono ${card.color}`}>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-1">
+              <div className="text-2xl font-bold font-mono">
                 {card.value}
-              </p>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {card.stats}
+              </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       ))}
     </div>
   );
